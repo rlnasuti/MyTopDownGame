@@ -71,6 +71,7 @@ public class Game1 : Game
     private const int MinimapHeight = MinimapWindowTiles * MinimapTileSize;   // 90 px
 
     private float _currentMoveSpeed;
+    private bool _debugOverlayEnabled = false;
     private const float NormalSpeed = 100f;
     private const float BuffedSpeed = 180f;
     private float _speedBuffTimer = 0;
@@ -89,6 +90,11 @@ public class Game1 : Game
     private float _entranceMsgTimer = 0f;   // seconds to display message
 
     private SpriteFont _font;
+
+    private KeyboardState _prevKeyboardState;
+
+    // Add this field to your Game1 class:
+    private bool _inCave = false;
 
     public Game1()
     {
@@ -193,10 +199,31 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-            Exit();
-
         KeyboardState state = Keyboard.GetState();
+
+        // --- Cave exit logic ---
+        if (_inCave)
+        {
+            // Example: press Space to exit cave
+            if (state.GetPressedKeys().Length > 0 && !_prevKeyboardState.IsKeyDown(state.GetPressedKeys()[0]))
+            {
+                // Respawn hero just south of the cave entrance
+                _heroPosition = new Vector2(
+                    _caveEntranceRect.X + (_caveEntranceRect.Width - _FrameWidth) / 2,
+                    _caveEntranceRect.Bottom + 2); // 2px below entrance
+
+                _inCave = false;
+            }
+
+            _prevKeyboardState = state;
+            base.Update(gameTime);
+            return;
+        }
+
+        // Toggle debug overlay on key press (not hold)
+        if (state.IsKeyDown(Keys.OemTilde) && !_prevKeyboardState.IsKeyDown(Keys.OemTilde))
+            _debugOverlayEnabled = !_debugOverlayEnabled;
+
         Vector2 movement = Vector2.Zero;
 
         if (state.IsKeyDown(Keys.Down))
@@ -225,24 +252,24 @@ public class Game1 : Game
             _timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (_timer > _animationSpeed)
             {
-                _frame = (_frame + 1) % 2; // since each direction only has 2 frames
+                _frame = (_frame + 1) % 2;
                 _timer = 0f;
             }
 
             Vector2 proposedPosition = _heroPosition + movement * _currentMoveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            
+
             // Convert to tile coordinates based on center of the hero
             int tileX = (int)(proposedPosition.X + _FrameWidth / 2) / _TileSize;
             int tileY = (int)(proposedPosition.Y + _FrameHeight / 2) / _TileSize;
 
             bool tileOk = _tiles[tileY, tileX].IsWalkable;
 
-            // Use a narrow rectangle representing the hero's feet (bottom 8 px)
+            // Use a narrow rectangle representing the hero's feet (bottom 8 px) at the proposed position
             Rectangle feetRect = new Rectangle(
-                (int)proposedPosition.X + 4,            // slight inset for better feel
+                (int)proposedPosition.X + 8,
                 (int)proposedPosition.Y + _FrameHeight - 8,
                 _FrameWidth - 16,
-                8);                                     // 8‑pixel tall strip
+                8);
 
             bool hitsEntrance = feetRect.Intersects(_caveEntranceRect);
             bool hitsCave     = feetRect.Intersects(_caveCollisionRect) && !hitsEntrance;
@@ -260,7 +287,6 @@ public class Game1 : Game
             else if (hitsCave)
             {
                 // Cave collision detected
-                _heroPosition = new Vector2(_heroPosition.X, _heroPosition.Y);
                 _frame = 0; // idle
             }
             else if (hitsEntrance)
@@ -269,16 +295,27 @@ public class Game1 : Game
                 _heroPosition = proposedPosition; // move accepted
                 _entranceMsgTimer = .5f;  // flash message for 2 seconds (stub for scene load)
             }
+
+            Rectangle heroRect = new Rectangle((int)proposedPosition.X, (int)proposedPosition.Y, _FrameWidth, _FrameHeight);
+
+            // Transition to cave scene if hero is fully inside the entrance
+            if (_caveEntranceRect.Contains(feetRect))
+            {
+                _inCave = true;
+                // Optionally: Reset hero position, load cave content, etc.
+                // For now, just return to prevent further updates
+                return;
+            }
         }
         else
         {
             _frame = 0; // idle
         }
 
-        Rectangle heroRect = new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight);
+        Rectangle heroRect2 = new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight);
         for (int i = _fruits.Count - 1; i >= 0; i--)
         {
-            if (_fruits[i].CheckPickup(heroRect))
+            if (_fruits[i].CheckPickup(heroRect2))
             {
                 _speedBuffTimer = 5f;            // seconds
                 _fruits.RemoveAt(i);
@@ -305,6 +342,7 @@ public class Game1 : Game
         _cameraPosition.X = MathHelper.Clamp(_cameraPosition.X, 0, mapWidth - 640);
         _cameraPosition.Y = MathHelper.Clamp(_cameraPosition.Y, 0, mapHeight - 360);
 
+        _prevKeyboardState = state; // Store for next frame
         base.Update(gameTime);
     }
 
@@ -327,7 +365,7 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
     }
 
     // --- Fruits ---
-    if (!isMinimap)   // change to 'true' later if you want them visible in minimap
+    if (!isMinimap)
     {
         foreach (var fruit in _fruits)
             fruit.Draw(sb, _speedFruitTexture);
@@ -368,18 +406,63 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
         sourceRectangle: null,
         color: Color.White);
 
-    if (!isMinimap)
+    // --- Debug overlay ---
+    if (_debugOverlayEnabled && !isMinimap)
     {
-        // Visualize entrance (green) and collision (red, semi‑transparent)
-        sb.Draw(_pixel, _caveCollisionRect, Color.Red * 0.25f);
-        sb.Draw(_pixel, _caveEntranceRect, Color.Lime * 0.4f);
+        // Draw yellow bounding box around hero
+        DrawBoundingBox(sb, new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight), Color.Yellow);
+
+        // Draw red bounding box for hero's feet collision rect
+        Rectangle feetRect = new Rectangle(
+            (int)_heroPosition.X + 8, // was +4, now +8 (moves 4px right)
+            (int)_heroPosition.Y + _FrameHeight - 8,
+            _FrameWidth - 16,
+            8);
+        DrawBoundingBox(sb, feetRect, Color.Red);
+
+        // Draw yellow bounding boxes around all fruits
+        foreach (var fruit in _fruits)
+        {
+            Rectangle fruitRect = new Rectangle((int)fruit.Position.X, (int)fruit.Position.Y, 32, 32);
+            DrawBoundingBox(sb, fruitRect, Color.Yellow);
+        }
+
+        // Draw yellow bounding boxes for cave entrance and collision
+        DrawBoundingBox(sb, _caveCollisionRect, Color.Yellow);
+        DrawBoundingBox(sb, _caveEntranceRect, Color.Yellow);
     }
 
     sb.End();
 }
 
+// Add this helper method to your Game1 class:
+private void DrawBoundingBox(SpriteBatch sb, Rectangle rect, Color color)
+{
+    // Top
+    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, rect.Width, 1), color);
+    // Bottom
+    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Bottom - 1, rect.Width, 1), color);
+    // Left
+    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, 1, rect.Height), color);
+    // Right
+    sb.Draw(_pixel, new Rectangle(rect.Right - 1, rect.Top, 1, rect.Height), color);
+}
+
     protected override void Draw(GameTime gameTime)
     {
+        if (_inCave)
+        {
+            GraphicsDevice.Clear(Color.Black);
+            _spriteBatch.Begin();
+            string msg = "You are now inside the cave!";
+            Vector2 size = _font.MeasureString(msg);
+            Vector2 pos = new Vector2((GraphicsDevice.Viewport.Width - size.X) / 2, (GraphicsDevice.Viewport.Height - size.Y) / 2);
+            _spriteBatch.DrawString(_font, msg, pos, Color.White);
+            _spriteBatch.End();
+            base.Draw(gameTime);
+            return;
+        }
+
         int screenWidth = GraphicsDevice.Viewport.Width;
         Vector2 _minimapPosition = new Vector2(screenWidth - MinimapWidth - 10, 10);
 
@@ -437,15 +520,6 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
         _spriteBatch.Draw(_pixel, new Rectangle(borderRect.Left, borderRect.Top, borderThickness, borderRect.Height), Color.White);
         // Right
         _spriteBatch.Draw(_pixel, new Rectangle(borderRect.Right - borderThickness, borderRect.Top, borderThickness, borderRect.Height), Color.White);
-
-        // Flash cave‑entrance message
-        if (_entranceMsgTimer > 0)
-        {
-            string msg = "Cave entrance detected";
-            Vector2 size = _font.MeasureString(msg);
-            Vector2 pos  = new Vector2((GraphicsDevice.Viewport.Width - size.X) / 2, 20);
-            _spriteBatch.DrawString(_font, msg, pos, Color.Yellow);
-        }
 
         _spriteBatch.End();
 

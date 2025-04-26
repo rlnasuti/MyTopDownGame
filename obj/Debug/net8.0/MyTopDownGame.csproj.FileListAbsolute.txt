@@ -36,3 +36,4 @@
 /Users/robertnasuti/Dev/MyTopDownGame/bin/Debug/net8.0/Content/Fonts/comic_sans.xnb
 /Users/robertnasuti/Dev/MyTopDownGame/bin/Debug/net8.0/Content/Objects/cave_bottom.xnb
 /Users/robertnasuti/Dev/MyTopDownGame/bin/Debug/net8.0/Content/Objects/cave_top.xnb
+/Users/robertnasuti/Dev/MyTopDownGame/obj/Debug/net8.0/MyTopDownGame.sourcelink.json
