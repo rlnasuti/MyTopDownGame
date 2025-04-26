@@ -1,0 +1,8 @@
+Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Fonts/comic_sans.spritefont","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Fonts/comic_sans.xnb","FontDescriptionProcessor","SpriteFontContent",472,37913,0.302659
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Objects/cave_bottom.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Objects/cave_bottom.xnb","TextureProcessor","Texture2DContent",305044,1810517,0.091147
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Objects/cave_top.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Objects/cave_top.xnb","TextureProcessor","Texture2DContent",402198,2365333,0.039731
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Sprites/hero.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Sprites/hero.xnb","TextureProcessor","Texture2DContent",23259,49237,0.0676
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Sprites/speed_fruit.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Sprites/speed_fruit.xnb","TextureProcessor","Texture2DContent",1440555,4194389,0.263192
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Tiles/grass_highres.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Tiles/grass_highres.xnb","TextureProcessor","Texture2DContent",1436679,4194389,0.133243
+"/Users/robertnasuti/Dev/MyTopDownGame/Content/Tiles/water_highres.png","/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Tiles/water_highres.xnb","TextureProcessor","Texture2DContent",2260038,4194389,0.152281

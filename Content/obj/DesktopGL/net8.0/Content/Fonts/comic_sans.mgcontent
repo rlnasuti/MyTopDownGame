@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SourceFile>/Users/robertnasuti/Dev/MyTopDownGame/Content/Fonts/comic_sans.spritefont</SourceFile>
+  <SourceTime>2025-04-24T15:24:23.9893083-04:00</SourceTime>
+  <DestFile>/Users/robertnasuti/Dev/MyTopDownGame/Content/bin/DesktopGL/Content/Fonts/comic_sans.xnb</DestFile>
+  <DestTime>2025-04-24T15:24:50.3439967-04:00</DestTime>
+  <Importer>FontDescriptionImporter</Importer>
+  <ImporterTime>2025-04-05T06:10:54-04:00</ImporterTime>
+  <Processor>FontDescriptionProcessor</Processor>
+  <ProcessorTime>2025-04-05T06:10:54-04:00</ProcessorTime>
+  <Parameters>
+    <Key>PremultiplyAlpha</Key>
+    <Value>True</Value>
+  </Parameters>
+  <Parameters>
+    <Key>TextureFormat</Key>
+    <Value>Compressed</Value>
+  </Parameters>
+  <Dependencies />
+  <BuildAsset />
+  <BuildOutput />
+</PipelineBuildEvent>
