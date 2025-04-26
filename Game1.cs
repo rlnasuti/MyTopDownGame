@@ -8,15 +8,15 @@ namespace MyTopDownGame;
 
 public class Tile
 {
-    public Texture2D Texture { get; set; }
-    public Rectangle SourceRect { get; set; }
-    public bool IsWalkable { get; set; }
+    public Texture2D Texture     { get; init; }
+    public Rectangle SourceRect  { get; init; }
+    public bool       IsWalkable { get; init; }
 
     public Tile(Texture2D texture, Rectangle sourceRect, bool isWalkable)
     {
-        Texture = texture;
-        SourceRect = sourceRect;
-        IsWalkable = isWalkable;
+        Texture     = texture;
+        SourceRect  = sourceRect;
+        IsWalkable  = isWalkable;
     }
 }
 
@@ -60,7 +60,7 @@ public class Game1 : Game
 
     private Vector2 _cameraPosition;
 
-    private readonly Random _random = new Random();
+    private readonly Random _random = new(42);
 
     private Texture2D _pixel;
 
@@ -74,6 +74,9 @@ public class Game1 : Game
     private bool _debugOverlayEnabled = false;
     private const float NormalSpeed = 100f;
     private const float BuffedSpeed = 180f;
+    // --- Hero foot‑collision sizing ---
+    private const int FeetHeight   = 8;
+    private const int FeetMarginX  = 8;   // shrink X by 8px on each side
     private float _speedBuffTimer = 0;
 
     // Cave render dimensions (texture is scaled to this on screen)
@@ -87,7 +90,6 @@ public class Game1 : Game
     // Cave collision helpers
     private Rectangle _caveCollisionRect;   // lower half of cave that is solid
     private Rectangle _caveEntranceRect;    // walk‑in entrance
-    private float _entranceMsgTimer = 0f;   // seconds to display message
 
     private SpriteFont _font;
 
@@ -164,22 +166,19 @@ public class Game1 : Game
         int entranceWidth  = 36;
         int entranceHeight = 48;
 
-        // Entrance sits one tile (32 px) higher than before
         _caveEntranceRect = new Rectangle(
             _caveRect.X + (_caveRect.Width - entranceWidth) / 2,
-            _caveRect.Bottom - entranceHeight - (2 *_TileSize),  // shift up 1 tile
+            _caveRect.Bottom - entranceHeight - (2 *_TileSize), 
             entranceWidth,
             entranceHeight);
 
-        // Solid collision: 2‑tile (64 px) high strip above the new entrance Y
         _caveCollisionRect = new Rectangle(
             _caveRect.X + (entranceWidth / 2),
-            _caveRect.Bottom - (4 * _TileSize) - _TileSize,   // top of solid zone
-            _caveRect.Width - entranceWidth,         // width of solid zone
-            3 * _TileSize);                       // 64 px tall
+            _caveRect.Bottom - (4 * _TileSize) - _TileSize, 
+            _caveRect.Width - entranceWidth,
+            3 * _TileSize);  
 
-        // Spawn hero north of the lake, centered in X,
-        // and halfway between lake top and cave entrance in Y.
+        // Spawn hero north of the lake
         int spawnTileX = 50; // map center
         int spawnTileY = 32; // halfway between lake top (~42) and cave entrance (~23)
         _heroPosition = new Vector2(spawnTileX * _TileSize, spawnTileY * _TileSize);
@@ -204,7 +203,6 @@ public class Game1 : Game
         // --- Cave exit logic ---
         if (_inCave)
         {
-            // Example: press Space to exit cave
             if (state.GetPressedKeys().Length > 0 && !_prevKeyboardState.IsKeyDown(state.GetPressedKeys()[0]))
             {
                 // Respawn hero just south of the cave entrance
@@ -220,32 +218,13 @@ public class Game1 : Game
             return;
         }
 
-        // Toggle debug overlay on key press (not hold)
+        // Toggle debug overlay on key press
         if (state.IsKeyDown(Keys.OemTilde) && !_prevKeyboardState.IsKeyDown(Keys.OemTilde))
             _debugOverlayEnabled = !_debugOverlayEnabled;
 
-        Vector2 movement = Vector2.Zero;
-
-        if (state.IsKeyDown(Keys.Down))
-        {
-            movement.Y += 1;
-            _currentDirection = Direction.Down;
-        }
-        if (state.IsKeyDown(Keys.Up))
-        {
-            movement.Y -= 1;
-            _currentDirection = Direction.Up;
-        }
-        if (state.IsKeyDown(Keys.Left))
-        {
-            movement.X -= 1;
-            _currentDirection = Direction.Left;
-        }
-        if (state.IsKeyDown(Keys.Right))
-        {
-            movement.X += 1;
-            _currentDirection = Direction.Right;
-        }
+        Direction intendedDir;
+        Vector2 movement = GetMovementVector(state, out intendedDir);
+        _currentDirection = intendedDir;
 
         if (movement != Vector2.Zero)
         {
@@ -262,14 +241,24 @@ public class Game1 : Game
             int tileX = (int)(proposedPosition.X + _FrameWidth / 2) / _TileSize;
             int tileY = (int)(proposedPosition.Y + _FrameHeight / 2) / _TileSize;
 
-            bool tileOk = _tiles[tileY, tileX].IsWalkable;
+            // Check all four corners of the hero's bounding box
+            int left   = (int)proposedPosition.X / _TileSize;
+            int right  = (int)(proposedPosition.X + _FrameWidth - 1) / _TileSize;
+            int top    = (int)proposedPosition.Y / _TileSize;
+            int bottom = (int)(proposedPosition.Y + _FrameHeight - 1) / _TileSize;
 
-            // Use a narrow rectangle representing the hero's feet (bottom 8 px) at the proposed position
+            bool tileOk =
+                _tiles[top, left].IsWalkable &&
+                _tiles[top, right].IsWalkable &&
+                _tiles[bottom, left].IsWalkable &&
+                _tiles[bottom, right].IsWalkable;
+
+            // Use a narrow rectangle representing the hero's feet at the proposed position
             Rectangle feetRect = new Rectangle(
-                (int)proposedPosition.X + 8,
-                (int)proposedPosition.Y + _FrameHeight - 8,
-                _FrameWidth - 16,
-                8);
+                (int)proposedPosition.X + FeetMarginX,
+                (int)proposedPosition.Y + _FrameHeight - FeetHeight,
+                _FrameWidth - (FeetMarginX * 2),
+                FeetHeight);
 
             bool hitsEntrance = feetRect.Intersects(_caveEntranceRect);
             bool hitsCave     = feetRect.Intersects(_caveCollisionRect) && !hitsEntrance;
@@ -282,7 +271,6 @@ public class Game1 : Game
             if (hitsEntrance && hitsCave)
             {
                 // Cave entrance detected
-                _entranceMsgTimer = 2f;            // seconds
             }
             else if (hitsCave)
             {
@@ -293,10 +281,9 @@ public class Game1 : Game
             {
                 // Cave entrance detected
                 _heroPosition = proposedPosition; // move accepted
-                _entranceMsgTimer = .5f;  // flash message for 2 seconds (stub for scene load)
             }
 
-            Rectangle heroRect = new Rectangle((int)proposedPosition.X, (int)proposedPosition.Y, _FrameWidth, _FrameHeight);
+            //Rectangle heroRect = new Rectangle((int)proposedPosition.X, (int)proposedPosition.Y, _FrameWidth, _FrameHeight);
 
             // Transition to cave scene if hero is fully inside the entrance
             if (_caveEntranceRect.Contains(feetRect))
@@ -312,10 +299,10 @@ public class Game1 : Game
             _frame = 0; // idle
         }
 
-        Rectangle heroRect2 = new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight);
+        Rectangle heroRect = new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight);
         for (int i = _fruits.Count - 1; i >= 0; i--)
         {
-            if (_fruits[i].CheckPickup(heroRect2))
+            if (_fruits[i].CheckPickup(heroRect))
             {
                 _speedBuffTimer = 5f;            // seconds
                 _fruits.RemoveAt(i);
@@ -331,8 +318,6 @@ public class Game1 : Game
             _currentMoveSpeed = NormalSpeed;
         }
 
-        if (_entranceMsgTimer > 0)
-            _entranceMsgTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         _cameraPosition = _heroPosition - new Vector2(320, 180); // center on hero in 640x360 space
 
@@ -347,6 +332,19 @@ public class Game1 : Game
     }
 
 // Renders the entire world with a supplied view matrix (camera or minimap).
+private Vector2 GetMovementVector(KeyboardState state, out Direction newDir)
+{
+    Vector2 movement = Vector2.Zero;
+    newDir = _currentDirection;
+
+    if (state.IsKeyDown(Keys.Down))  { movement.Y += 1; newDir = Direction.Down;  }
+    if (state.IsKeyDown(Keys.Up))    { movement.Y -= 1; newDir = Direction.Up;    }
+    if (state.IsKeyDown(Keys.Left))  { movement.X -= 1; newDir = Direction.Left;  }
+    if (state.IsKeyDown(Keys.Right)) { movement.X += 1; newDir = Direction.Right; }
+
+    return movement;
+}
+
 private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
 {
     sb.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
@@ -361,6 +359,12 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
                 new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize),
                 _tiles[y, x].SourceRect,
                 Color.White);
+
+            // Draw tile bounding box in debug overlay (only in main view)
+            if (_debugOverlayEnabled && !isMinimap)
+            {
+                DrawBoundingBox(sb, new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize), Color.Yellow * 0.3f);
+            }
         }
     }
 
@@ -372,7 +376,6 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
     }
 
     int destTopHeight    = (int)(CaveSplitOffsetY * CaveScale);
-    int destBottomHeight = (int)((_caveBottomTexture.Height) * CaveScale);
 
     // --- Cave BACK (top slice) ---
     sb.Draw(
@@ -414,10 +417,10 @@ private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
 
         // Draw red bounding box for hero's feet collision rect
         Rectangle feetRect = new Rectangle(
-            (int)_heroPosition.X + 8, // was +4, now +8 (moves 4px right)
-            (int)_heroPosition.Y + _FrameHeight - 8,
-            _FrameWidth - 16,
-            8);
+            (int)_heroPosition.X + FeetMarginX,
+            (int)_heroPosition.Y + _FrameHeight - FeetHeight,
+            _FrameWidth - (FeetMarginX * 2),
+            FeetHeight);
         DrawBoundingBox(sb, feetRect, Color.Red);
 
         // Draw yellow bounding boxes around all fruits
