@@ -8,15 +8,15 @@ namespace MyTopDownGame;
 
 public class Tile
 {
-    public Texture2D Texture     { get; init; }
-    public Rectangle SourceRect  { get; init; }
-    public bool       IsWalkable { get; init; }
+    public Texture2D Texture { get; init; }
+    public Rectangle SourceRect { get; init; }
+    public bool IsWalkable { get; init; }
 
     public Tile(Texture2D texture, Rectangle sourceRect, bool isWalkable)
     {
-        Texture     = texture;
-        SourceRect  = sourceRect;
-        IsWalkable  = isWalkable;
+        Texture = texture;
+        SourceRect = sourceRect;
+        IsWalkable = isWalkable;
     }
 }
 
@@ -67,7 +67,7 @@ public class Game1 : Game
     private const int MinimapWindowTiles = 30;       // 30×30 tile window
     private const int MinimapViewRadius = MinimapWindowTiles / 2; // 15 tiles each direction
     private const int MinimapTileSize = 3;                     // pixel size per map‑tile in minimap
-    private const int MinimapWidth  = MinimapWindowTiles * MinimapTileSize;   // 90 px
+    private const int MinimapWidth = MinimapWindowTiles * MinimapTileSize;   // 90 px
     private const int MinimapHeight = MinimapWindowTiles * MinimapTileSize;   // 90 px
 
     private float _currentMoveSpeed;
@@ -75,12 +75,12 @@ public class Game1 : Game
     private const float NormalSpeed = 100f;
     private const float BuffedSpeed = 180f;
     // --- Hero foot‑collision sizing ---
-    private const int FeetHeight   = 8;
-    private const int FeetMarginX  = 8;   // shrink X by 8px on each side
+    private const int FeetHeight = 8;
+    private const int FeetMarginX = 8;   // shrink X by 8px on each side
     private float _speedBuffTimer = 0;
 
     // Cave render dimensions (texture is scaled to this on screen)
-    private const int CaveDrawWidth  = 256;
+    private const int CaveDrawWidth = 256;
     private const int CaveDrawHeight = 256;
     // Vertical offset where the bottom slice starts (measured in source image pixels)
     private const int CaveSplitOffsetY = 442;
@@ -118,7 +118,7 @@ public class Game1 : Game
         _speedFruitTexture = Content.Load<Texture2D>("Sprites/speed_fruit");
         _waterTexture = Content.Load<Texture2D>("Tiles/water_highres");
         _grassTexture = Content.Load<Texture2D>("Tiles/grass_highres");
-        _caveTopTexture    = Content.Load<Texture2D>("Objects/cave_top");
+        _caveTopTexture = Content.Load<Texture2D>("Objects/cave_top");
         _caveBottomTexture = Content.Load<Texture2D>("Objects/cave_bottom");
         _renderTarget = new RenderTarget2D(GraphicsDevice, 640, 360);
         _minimapRenderTarget = new RenderTarget2D(GraphicsDevice, MinimapWidth, MinimapHeight);
@@ -163,20 +163,20 @@ public class Game1 : Game
            Everything above remains pass‑through so the hero can walk “behind”.
         */
 
-        int entranceWidth  = 36;
+        int entranceWidth = 36;
         int entranceHeight = 48;
 
         _caveEntranceRect = new Rectangle(
             _caveRect.X + (_caveRect.Width - entranceWidth) / 2,
-            _caveRect.Bottom - entranceHeight - (2 *_TileSize), 
+            _caveRect.Bottom - entranceHeight - (2 * _TileSize),
             entranceWidth,
             entranceHeight);
 
         _caveCollisionRect = new Rectangle(
             _caveRect.X + (entranceWidth / 2),
-            _caveRect.Bottom - (4 * _TileSize) - _TileSize, 
+            _caveRect.Bottom - (4 * _TileSize) - _TileSize,
             _caveRect.Width - entranceWidth,
-            3 * _TileSize);  
+            3 * _TileSize);
 
         // Spawn hero north of the lake
         int spawnTileX = 50; // map center
@@ -237,14 +237,10 @@ public class Game1 : Game
 
             Vector2 proposedPosition = _heroPosition + movement * _currentMoveSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Convert to tile coordinates based on center of the hero
-            int tileX = (int)(proposedPosition.X + _FrameWidth / 2) / _TileSize;
-            int tileY = (int)(proposedPosition.Y + _FrameHeight / 2) / _TileSize;
-
             // Check all four corners of the hero's bounding box
-            int left   = (int)proposedPosition.X / _TileSize;
-            int right  = (int)(proposedPosition.X + _FrameWidth - 1) / _TileSize;
-            int top    = (int)proposedPosition.Y / _TileSize;
+            int left = (int)proposedPosition.X / _TileSize;
+            int right = (int)(proposedPosition.X + _FrameWidth - 1) / _TileSize;
+            int top = (int)proposedPosition.Y / _TileSize;
             int bottom = (int)(proposedPosition.Y + _FrameHeight - 1) / _TileSize;
 
             bool tileOk =
@@ -261,7 +257,7 @@ public class Game1 : Game
                 FeetHeight);
 
             bool hitsEntrance = feetRect.Intersects(_caveEntranceRect);
-            bool hitsCave     = feetRect.Intersects(_caveCollisionRect) && !hitsEntrance;
+            bool hitsCave = feetRect.Intersects(_caveCollisionRect) && !hitsEntrance;
 
             if (tileOk && !hitsCave)
             {
@@ -331,125 +327,124 @@ public class Game1 : Game
         base.Update(gameTime);
     }
 
-// Renders the entire world with a supplied view matrix (camera or minimap).
-private Vector2 GetMovementVector(KeyboardState state, out Direction newDir)
-{
-    Vector2 movement = Vector2.Zero;
-    newDir = _currentDirection;
-
-    if (state.IsKeyDown(Keys.Down))  { movement.Y += 1; newDir = Direction.Down;  }
-    if (state.IsKeyDown(Keys.Up))    { movement.Y -= 1; newDir = Direction.Up;    }
-    if (state.IsKeyDown(Keys.Left))  { movement.X -= 1; newDir = Direction.Left;  }
-    if (state.IsKeyDown(Keys.Right)) { movement.X += 1; newDir = Direction.Right; }
-
-    return movement;
-}
-
-private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
-{
-    sb.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
-
-    // --- Tiles ---
-    for (int y = 0; y < _tiles.GetLength(0); y++)
+    private Vector2 GetMovementVector(KeyboardState state, out Direction newDir)
     {
-        for (int x = 0; x < _tiles.GetLength(1); x++)
-        {
-            sb.Draw(
-                _tiles[y, x].Texture,
-                new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize),
-                _tiles[y, x].SourceRect,
-                Color.White);
+        Vector2 movement = Vector2.Zero;
+        newDir = _currentDirection;
 
-            // Draw tile bounding box in debug overlay (only in main view)
-            if (_debugOverlayEnabled && !isMinimap)
+        if (state.IsKeyDown(Keys.Down)) { movement.Y += 1; newDir = Direction.Down; }
+        if (state.IsKeyDown(Keys.Up)) { movement.Y -= 1; newDir = Direction.Up; }
+        if (state.IsKeyDown(Keys.Left)) { movement.X -= 1; newDir = Direction.Left; }
+        if (state.IsKeyDown(Keys.Right)) { movement.X += 1; newDir = Direction.Right; }
+
+        return movement;
+    }
+
+    private void DrawWorld(SpriteBatch sb, Matrix transform, bool isMinimap)
+    {
+        sb.Begin(transformMatrix: transform, samplerState: SamplerState.PointClamp);
+
+        // --- Tiles ---
+        for (int y = 0; y < _tiles.GetLength(0); y++)
+        {
+            for (int x = 0; x < _tiles.GetLength(1); x++)
             {
-                DrawBoundingBox(sb, new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize), Color.Yellow * 0.3f);
+                sb.Draw(
+                    _tiles[y, x].Texture,
+                    new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize),
+                    _tiles[y, x].SourceRect,
+                    Color.White);
+
+                // Draw tile bounding box in debug overlay (only in main view)
+                if (_debugOverlayEnabled && !isMinimap)
+                {
+                    DrawBoundingBox(sb, new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize), Color.Yellow * 0.3f);
+                }
             }
         }
-    }
 
-    // --- Fruits ---
-    if (!isMinimap)
-    {
-        foreach (var fruit in _fruits)
-            fruit.Draw(sb, _speedFruitTexture);
-    }
-
-    int destTopHeight    = (int)(CaveSplitOffsetY * CaveScale);
-
-    // --- Cave BACK (top slice) ---
-    sb.Draw(
-        _caveBottomTexture,
-        destinationRectangle: new Rectangle(
-            (int)_cavePosition.X,
-            (int)_cavePosition.Y + destTopHeight,
-            CaveDrawWidth,
-            CaveDrawHeight - destTopHeight),
-        sourceRectangle: null,
-        color: Color.White);
-
-    // --- Hero sprite ---
-    Rectangle heroSourceRect = new Rectangle(_frame * _FrameWidth, (int)_currentDirection * _FrameHeight, _FrameWidth, _FrameHeight);
-    SpriteEffects effects = SpriteEffects.None;
-    if (_currentDirection == Direction.Left)
-    {
-        heroSourceRect = new Rectangle(_frame * _FrameWidth, (int)Direction.Right * _FrameHeight, _FrameWidth, _FrameHeight);
-        effects = SpriteEffects.FlipHorizontally;
-    }
-    sb.Draw(_heroTexture, _heroPosition, heroSourceRect, Color.White, 0f, Vector2.Zero, 1f, effects, 0f);
-
-    // --- Cave FRONT (bottom slice) ---
-    sb.Draw(
-        _caveTopTexture,
-        destinationRectangle: new Rectangle(
-            (int)_cavePosition.X,
-            (int)_cavePosition.Y,
-            CaveDrawWidth,
-            destTopHeight),
-        sourceRectangle: null,
-        color: Color.White);
-
-    // --- Debug overlay ---
-    if (_debugOverlayEnabled && !isMinimap)
-    {
-        // Draw yellow bounding box around hero
-        DrawBoundingBox(sb, new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight), Color.Yellow);
-
-        // Draw red bounding box for hero's feet collision rect
-        Rectangle feetRect = new Rectangle(
-            (int)_heroPosition.X + FeetMarginX,
-            (int)_heroPosition.Y + _FrameHeight - FeetHeight,
-            _FrameWidth - (FeetMarginX * 2),
-            FeetHeight);
-        DrawBoundingBox(sb, feetRect, Color.Red);
-
-        // Draw yellow bounding boxes around all fruits
-        foreach (var fruit in _fruits)
+        // --- Fruits ---
+        if (!isMinimap)
         {
-            Rectangle fruitRect = new Rectangle((int)fruit.Position.X, (int)fruit.Position.Y, 32, 32);
-            DrawBoundingBox(sb, fruitRect, Color.Yellow);
+            foreach (var fruit in _fruits)
+                fruit.Draw(sb, _speedFruitTexture);
         }
 
-        // Draw yellow bounding boxes for cave entrance and collision
-        DrawBoundingBox(sb, _caveCollisionRect, Color.Yellow);
-        DrawBoundingBox(sb, _caveEntranceRect, Color.Yellow);
+        int destTopHeight = (int)(CaveSplitOffsetY * CaveScale);
+
+        // --- Cave FRONT (bottom slice) ---
+        sb.Draw(
+            _caveBottomTexture,
+            destinationRectangle: new Rectangle(
+                (int)_cavePosition.X,
+                (int)_cavePosition.Y + destTopHeight,
+                CaveDrawWidth,
+                CaveDrawHeight - destTopHeight),
+            sourceRectangle: null,
+            color: Color.White);
+
+        // --- Hero sprite ---
+        Rectangle heroSourceRect = new Rectangle(_frame * _FrameWidth, (int)_currentDirection * _FrameHeight, _FrameWidth, _FrameHeight);
+        SpriteEffects effects = SpriteEffects.None;
+        if (_currentDirection == Direction.Left)
+        {
+            heroSourceRect = new Rectangle(_frame * _FrameWidth, (int)Direction.Right * _FrameHeight, _FrameWidth, _FrameHeight);
+            effects = SpriteEffects.FlipHorizontally;
+        }
+        sb.Draw(_heroTexture, _heroPosition, heroSourceRect, Color.White, 0f, Vector2.Zero, 1f, effects, 0f);
+
+        // --- Cave BACK (top slice) ---
+        sb.Draw(
+            _caveTopTexture,
+            destinationRectangle: new Rectangle(
+                (int)_cavePosition.X,
+                (int)_cavePosition.Y,
+                CaveDrawWidth,
+                destTopHeight),
+            sourceRectangle: null,
+            color: Color.White);
+
+        // --- Debug overlay ---
+        if (_debugOverlayEnabled && !isMinimap)
+        {
+            // Draw yellow bounding box around hero
+            DrawBoundingBox(sb, new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight), Color.Yellow);
+
+            // Draw red bounding box for hero's feet collision rect
+            Rectangle feetRect = new Rectangle(
+                (int)_heroPosition.X + FeetMarginX,
+                (int)_heroPosition.Y + _FrameHeight - FeetHeight,
+                _FrameWidth - (FeetMarginX * 2),
+                FeetHeight);
+            DrawBoundingBox(sb, feetRect, Color.Red);
+
+            // Draw yellow bounding boxes around all fruits
+            foreach (var fruit in _fruits)
+            {
+                Rectangle fruitRect = new Rectangle((int)fruit.Position.X, (int)fruit.Position.Y, 32, 32);
+                DrawBoundingBox(sb, fruitRect, Color.Yellow);
+            }
+
+            // Draw yellow bounding boxes for cave entrance and collision
+            DrawBoundingBox(sb, _caveCollisionRect, Color.Yellow);
+            DrawBoundingBox(sb, _caveEntranceRect, Color.Yellow);
+        }
+
+        sb.End();
     }
 
-    sb.End();
-}
-
-// Add this helper method to your Game1 class:
-private void DrawBoundingBox(SpriteBatch sb, Rectangle rect, Color color)
-{
-    // Top
-    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, rect.Width, 1), color);
-    // Bottom
-    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Bottom - 1, rect.Width, 1), color);
-    // Left
-    sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, 1, rect.Height), color);
-    // Right
-    sb.Draw(_pixel, new Rectangle(rect.Right - 1, rect.Top, 1, rect.Height), color);
-}
+    // Add this helper method to your Game1 class:
+    private void DrawBoundingBox(SpriteBatch sb, Rectangle rect, Color color)
+    {
+        // Top
+        sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, rect.Width, 1), color);
+        // Bottom
+        sb.Draw(_pixel, new Rectangle(rect.Left, rect.Bottom - 1, rect.Width, 1), color);
+        // Left
+        sb.Draw(_pixel, new Rectangle(rect.Left, rect.Top, 1, rect.Height), color);
+        // Right
+        sb.Draw(_pixel, new Rectangle(rect.Right - 1, rect.Top, 1, rect.Height), color);
+    }
 
     protected override void Draw(GameTime gameTime)
     {
