@@ -18,7 +18,7 @@ public abstract class BaseScene
     protected Texture2D Pixel => _game.Pixel;      // 1×1 white – supplied by Game1
 
     // ---------- debug overlay ----------
-    private bool _debugOverlayEnabled = true;
+    private bool _debugOverlayEnabled = false;
     private KeyboardState _prevKeyboardState;
     protected bool DebugOverlayEnabled => _debugOverlayEnabled;
 
