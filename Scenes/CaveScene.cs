@@ -4,32 +4,33 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MyTopDownGame.Scenes;
 
-public class CaveScene : IScene
+public class CaveScene : BaseScene
 {
-    private readonly Game1 _game;
     private readonly OverworldScene _overworld;
     private SpriteBatch _spriteBatch => _game.SpriteBatch;
-    private GraphicsDevice GraphicsDevice => _game.GraphicsDevice;
     private SpriteFont _font;
 
     private KeyboardState _prevKeyboardState;
 
-    public CaveScene(Game1 game, OverworldScene overworld)
+    public CaveScene(Game1 game, OverworldScene overworld) : base(game)
     {
-        _game       = game;
-        _overworld  = overworld;
+        // Pass in the overworld scene to switch back to
+        _overworld = overworld;
     }
 
-    public void LoadContent()
+
+    override public void LoadContent()
     {
         _font = _game.Content.Load<SpriteFont>("Fonts/comic_sans");
         // Capture current keyboard state so held keys don't instantly trigger exit
         _prevKeyboardState = Keyboard.GetState();
     }
 
-    public void Update(GameTime gameTime)
+    override public void Update(GameTime gameTime)
     {
         KeyboardState state = Keyboard.GetState();
+
+        HandleDebugToggle();
 
         // Press any key (new press) to exit cave
         if (state.GetPressedKeys().Length > 0 && !_prevKeyboardState.IsKeyDown(state.GetPressedKeys()[0]))
@@ -41,7 +42,7 @@ public class CaveScene : IScene
         _prevKeyboardState = state;
     }
 
-    public void Draw(GameTime gameTime)
+    override public void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
 

@@ -27,7 +27,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
     private Texture2D _pixel;
 
-    private IScene _currentScene;
+    private BaseScene _currentScene;
 
     public Game1()
     {
@@ -68,7 +68,7 @@ public class Game1 : Game
     /// <summary>
     /// Switches the current scene to the provided newScene.
     /// </summary>
-    public void SwitchScene(IScene newScene)
+    public void SwitchScene(BaseScene newScene)
     {
         _currentScene = newScene;
         _currentScene?.LoadContent();

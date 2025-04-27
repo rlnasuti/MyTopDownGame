@@ -7,75 +7,50 @@ using System.Collections.Generic;
 
 namespace MyTopDownGame.Scenes;
 
-public class OverworldScene : IScene
+public class OverworldScene : BaseScene
 {
-    private readonly Game1 _game;
     private SpriteBatch _spriteBatch => _game.SpriteBatch;
-    private GraphicsDevice GraphicsDevice => _game.GraphicsDevice;
-    private ContentManager Content => _game.Content;
-
     private Texture2D _heroTexture;
     private Texture2D _waterTexture;
     private Texture2D _grassTexture;
     private Texture2D _speedFruitTexture;
     private Texture2D _caveTopTexture;
     private Texture2D _caveBottomTexture;
-    private SpriteFont _font;
-
     private Tile[,] _tiles;
     private List<AlienSpeedFruit> _fruits = new List<AlienSpeedFruit>();
-
     private Vector2 _heroPosition;
     private Vector2 _cameraPosition;
     private Vector2 _cavePosition;
-
     private Rectangle _caveRect;
     private Rectangle _caveEntranceRect;
     private Rectangle _caveCollisionRect;
-
     private const int _TileSize = 32;
     private const int _FrameWidth = 32;
     private const int _FrameHeight = 40;
-    private const int MinimapTileSize = 3;
     private const int FeetHeight = 8;
     private const int FeetMarginX = 8;
-
     private static readonly Rectangle WaterTileSourceRect = new Rectangle(40, 50, 950, 900);
     private static readonly Rectangle GrassTileSourceRect = new Rectangle(0, 0, 1024, 1024);
-
     private int _frame = 0;
     private float _timer = 0f;
     private float _animationSpeed = 0.2f;
     private float _currentMoveSpeed;
     private float _speedBuffTimer = 0f;
-
     private enum Direction { Down, Right, Up, Left }
     private Direction _currentDirection = Direction.Down;
-
     private KeyboardState _prevKeyboardState;
     private readonly Random _random = new Random(42);
-
-    private RenderTarget2D _renderTarget;
-    private RenderTarget2D _minimapRenderTarget;
-
-    private const int MinimapWindowTiles = 30;
-    private const int MinimapViewRadius = MinimapWindowTiles / 2;
-    private const int MinimapWidth = MinimapWindowTiles * MinimapTileSize;
-    private const int MinimapHeight = MinimapWindowTiles * MinimapTileSize;
-
     private const int CaveDrawWidth = 256;
     private const int CaveDrawHeight = 256;
     private const int CaveSplitOffsetY = 442;
     private const float CaveScale = 0.25f;
 
-    private bool _debugOverlayEnabled = false;
-
-    public OverworldScene(Game1 game)
+    public OverworldScene(Game1 game) : base(game)
     {
-        _game = game;
+        // Scene-specific render targets
     }
 
-    public void LoadContent()
+    override public void LoadContent()
     {
         _heroTexture = Content.Load<Texture2D>("Sprites/hero");
         _speedFruitTexture = Content.Load<Texture2D>("Sprites/speed_fruit");
@@ -83,10 +58,6 @@ public class OverworldScene : IScene
         _grassTexture = Content.Load<Texture2D>("Tiles/grass_highres");
         _caveTopTexture = Content.Load<Texture2D>("Objects/cave_top");
         _caveBottomTexture = Content.Load<Texture2D>("Objects/cave_bottom");
-        _font = Content.Load<SpriteFont>("Fonts/comic_sans");
-
-        _renderTarget = new RenderTarget2D(GraphicsDevice, 640, 360);
-        _minimapRenderTarget = new RenderTarget2D(GraphicsDevice, MinimapWidth, MinimapHeight);
 
         InitializeMap();
     }
@@ -160,12 +131,11 @@ public class OverworldScene : IScene
         _currentMoveSpeed = 100f; // NormalSpeed
     }
 
-    public void Update(GameTime gameTime)
+    override public void Update(GameTime gameTime)
     {
         KeyboardState state = Keyboard.GetState();
 
-        if (state.IsKeyDown(Keys.OemTilde) && !_prevKeyboardState.IsKeyDown(Keys.OemTilde))
-            _debugOverlayEnabled = !_debugOverlayEnabled;
+        HandleDebugToggle();
 
         Vector2 movement = GetMovementVector(state, out Direction intendedDir);
         _currentDirection = intendedDir;
@@ -245,7 +215,7 @@ public class OverworldScene : IScene
         _prevKeyboardState = state;
     }
 
-    public void Draw(GameTime gameTime)
+    override public void Draw(GameTime gameTime)
     {
         // ----- World / minimap draw copied from old Game1 -----
         int screenWidth = GraphicsDevice.Viewport.Width;
@@ -318,7 +288,7 @@ public class OverworldScene : IScene
                         _tiles[y, x].SourceRect,
                         Color.White);
 
-                if (_debugOverlayEnabled && !isMinimap)
+                if (DebugOverlayEnabled && !isMinimap)
                     DrawBoundingBox(sb, new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize), Color.Yellow * 0.3f);
             }
         }
@@ -358,7 +328,7 @@ public class OverworldScene : IScene
                 null, Color.White);
 
         // Debug overlay
-        if (_debugOverlayEnabled && !isMinimap)
+        if (DebugOverlayEnabled && !isMinimap)
         {
             DrawBoundingBox(sb, new Rectangle((int)_heroPosition.X, (int)_heroPosition.Y, _FrameWidth, _FrameHeight), Color.Yellow);
 
@@ -376,14 +346,6 @@ public class OverworldScene : IScene
         }
 
         sb.End();
-    }
-
-    private void DrawBoundingBox(SpriteBatch sb, Rectangle rect, Color color)
-    {
-        sb.Draw(_game.Pixel, new Rectangle(rect.Left, rect.Top, rect.Width, 1), color);               // top
-        sb.Draw(_game.Pixel, new Rectangle(rect.Left, rect.Bottom - 1, rect.Width, 1), color);        // bottom
-        sb.Draw(_game.Pixel, new Rectangle(rect.Left, rect.Top, 1, rect.Height), color);              // left
-        sb.Draw(_game.Pixel, new Rectangle(rect.Right - 1, rect.Top, 1, rect.Height), color);         // right
     }
 
     private Vector2 GetMovementVector(KeyboardState state, out Direction newDir)
