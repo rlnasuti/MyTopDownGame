@@ -284,9 +284,15 @@ public class OverworldScene : BaseScene
             for (int x = 0; x < _tiles.GetLength(1); x++)
             {
                 sb.Draw(_tiles[y, x].Texture,
-                        new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize),
-                        _tiles[y, x].SourceRect,
-                        Color.White);
+                        new Rectangle
+                        (
+                            x * _TileSize,
+                            y * _TileSize,
+                            _TileSize,
+                            _TileSize),
+                            _tiles[y, x].SourceRect,
+                            Color.White
+                        );
 
                 if (DebugOverlayEnabled && !isMinimap)
                     DrawBoundingBox(sb, new Rectangle(x * _TileSize, y * _TileSize, _TileSize, _TileSize), Color.Yellow * 0.3f);
